@@ -37,12 +37,13 @@ collections:
 ## Development
 
 The development environment is managed with [uv](https://docs.astral.sh/uv/). Molecule tests
-run with Podman or Docker, see [CONTRIBUTING.md](CONTRIBUTING.md#testing).
+run with Docker or Podman, see [CONTRIBUTING.md](CONTRIBUTING.md#testing).
 
 ```shell
 uv sync
 uv run ansible-lint
-MOLECULE_DISTRO=debian13 uv run molecule test
+MOLECULE_DISTRO=debian13 uv run molecule test                        # Docker
+MOLECULE_DISTRO=debian13 uv run molecule test --scenario-name podman  # Podman
 ```
 
 ## Releasing
@@ -51,7 +52,3 @@ MOLECULE_DISTRO=debian13 uv run molecule test
 2. Create a GitHub release with the tag `v<version>`.
 3. The release workflow publishes the collection to Ansible Galaxy. It needs the repository secret
    `ANSIBLE_GALAXY_API_KEY` in the GitHub environment `release`.
-
-## License
-
-MIT

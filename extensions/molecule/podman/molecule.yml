@@ -1,0 +1,23 @@
+---
+# Podman scenario, shares its playbooks with the default (Docker) scenario.
+dependency:
+  name: galaxy
+  options:
+    role-file: ${MOLECULE_SCENARIO_DIRECTORY}/../default/requirements.yml
+    requirements-file: ${MOLECULE_SCENARIO_DIRECTORY}/../default/requirements.yml
+driver:
+  name: podman
+platforms:
+  - name: step-ca
+    image: "docker.io/geerlingguy/docker-${MOLECULE_DISTRO:-debian13}-ansible:latest"
+    # Podman detects the systemd command of the image and sets up cgroups itself.
+    command: ""
+    privileged: true
+    pre_build_image: true
+provisioner:
+  name: ansible
+  playbooks:
+    converge: ../default/converge.yml
+    verify: ../default/verify.yml
+verifier:
+  name: ansible

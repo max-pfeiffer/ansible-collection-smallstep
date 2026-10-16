@@ -19,23 +19,24 @@ run, so there is no need to build or install it first.
 
 ```shell
 MOLECULE_DISTRO=debian12 uv run molecule test
-MOLECULE_DISTRO=debian13 uv run molecule test  # default
+MOLECULE_DISTRO=debian13 uv run molecule test  # default distribution
 ```
 
 ### Container engine
 
-The scenario uses the `containers` driver, which runs the tests with Podman if it is installed
-and with Docker otherwise. To choose the engine explicitly:
+There is one scenario per container engine. Both run the same `converge.yml` and `verify.yml`,
+but each uses the options its engine needs to run systemd in a container.
 
-```shell
-MOLECULE_CONTAINERS_BACKEND=docker uv run molecule test
-MOLECULE_CONTAINERS_BACKEND=podman uv run molecule test
-```
+| Scenario | Engine | Command |
+|---|---|---|
+| `default` | Docker | `uv run molecule test` |
+| `podman` | Podman | `uv run molecule test --scenario-name podman` |
 
-- **Docker:** the Docker daemon must be running and the `docker` CLI must be on the `PATH`.
+- **Docker:** the Docker daemon must be running and the `docker` CLI must be on the `PATH`. On
+  cgroup v2 hosts the container shares the host cgroup namespace (`cgroupns_mode: host`).
 - **Podman:** on macOS and Windows, a Podman machine must be running (`podman machine start`).
-  The test container is privileged and runs systemd, which is tested with a rootful Podman
-  machine.
+  Podman detects the systemd command of the image and sets up cgroups itself. The test
+  container is privileged and runs systemd, which is tested with a rootful Podman machine.
 
 ### Isolating installed collections
 
@@ -50,6 +51,8 @@ It must be set as an environment variable, not in `ansible.cfg`, because Molecul
 decide where to install the collection.
 
 ### Development loop
+
+Add `--scenario-name podman` to each command when using Podman.
 
 ```shell
 uv run molecule converge  # create the container and apply the role
