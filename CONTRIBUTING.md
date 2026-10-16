@@ -36,7 +36,15 @@ but each uses the options its engine needs to run systemd in a container.
   cgroup v2 hosts the container shares the host cgroup namespace (`cgroupns_mode: host`).
 - **Podman:** on macOS and Windows, a Podman machine must be running (`podman machine start`).
   Podman detects the systemd command of the image and sets up cgroups itself. The test
-  container is privileged and runs systemd, which is tested with a rootful Podman machine.
+  container is privileged and runs systemd, which needs rootful Podman. Switch a Podman
+  machine to rootful mode with `podman machine stop && podman machine set --rootful &&
+  podman machine start`. On Linux, run Podman as root through a wrapper, like CI does:
+
+  ```shell
+  printf '#!/bin/sh\nexec sudo podman "$@"\n' | sudo tee /usr/local/bin/sudo-podman > /dev/null
+  sudo chmod 0755 /usr/local/bin/sudo-podman
+  MOLECULE_PODMAN_EXECUTABLE=sudo-podman uv run molecule test --scenario-name podman
+  ```
 
 ### Isolating installed collections
 
