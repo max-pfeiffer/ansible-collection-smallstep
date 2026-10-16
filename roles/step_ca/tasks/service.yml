@@ -6,6 +6,7 @@
     owner: root
     group: root
     mode: "0644"
+  register: __step_ca_unit
   notify: Restart step-ca
 
 - name: Enable and start step-ca
