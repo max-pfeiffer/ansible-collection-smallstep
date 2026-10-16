@@ -15,10 +15,12 @@
     fail_msg: step_ca_root_cert and step_ca_intermediate_cert must be PEM encoded certificates.
     quiet: true
 
+# Accepts PKCS#8 encrypted keys and RFC 1423 encrypted keys, which step-cli
+# creates by default.
 - name: Assert an encrypted intermediate key
   ansible.builtin.assert:
     that:
-      - step_ca_intermediate_key is search('-----BEGIN ENCRYPTED PRIVATE KEY-----')
+      - "step_ca_intermediate_key is search('-----BEGIN ENCRYPTED PRIVATE KEY-----|Proc-Type: 4,ENCRYPTED')"
     fail_msg: >-
       step_ca_intermediate_key must be an encrypted PEM key. Set step_ca_require_encrypted_key
       to false to deploy an unencrypted key.
