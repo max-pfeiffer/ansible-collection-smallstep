@@ -32,7 +32,7 @@ jobs:
       - run: uv run ansible-galaxy collection build --output-path build/
 
   molecule:
-    name: molecule (${{ matrix.distro }}, ${{ matrix.scenario }}, ${{ matrix.runner }})
+    name: molecule (${{ matrix.distro }}, ${{ matrix.db_type }}, ${{ matrix.scenario }}, ${{ matrix.runner }})
     needs: lint
     runs-on: ${{ matrix.runner }}
     strategy:
@@ -40,9 +40,11 @@ jobs:
       matrix:
         runner: [ubuntu-24.04, ubuntu-24.04-arm]
         distro: [debian12, debian13]
+        db_type: [badgerv2, bbolt]
         scenario: [default, podman]
     env:
       MOLECULE_DISTRO: ${{ matrix.distro }}
+      MOLECULE_STEP_CA_DB_TYPE: ${{ matrix.db_type }}
       PY_COLORS: "1"
       ANSIBLE_FORCE_COLOR: "1"
     steps:

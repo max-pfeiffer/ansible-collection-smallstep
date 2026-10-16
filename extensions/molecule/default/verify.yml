@@ -63,3 +63,61 @@
       ansible.builtin.assert:
         that:
           - step_health.stdout == 'ok'
+
+    - name: Read ca.json
+      ansible.builtin.slurp:
+        src: /etc/step-ca/config/ca.json
+      register: ca_json_file
+
+    - name: Stat the database
+      ansible.builtin.stat:
+        path: "{{ ca_json.db.dataSource }}"
+      vars:
+        ca_json: "{{ ca_json_file.content | b64decode | from_json }}"
+      register: database
+
+    - name: Assert the policy is on the authority level and the database exists
+      ansible.builtin.assert:
+        that:
+          - ca_json.authority.policy.x509.allow.dns == ['*.k8s.internal']
+          - ca_json.authority.provisioners | selectattr('policy', 'defined') | list | length == 0
+          # badger keeps its database in a directory, bbolt in a single file.
+          - database.stat.isreg if ca_json.db.type == 'bbolt' else database.stat.isdir
+          - database.stat.pw_name == 'step'
+      vars:
+        ca_json: "{{ ca_json_file.content | b64decode | from_json }}"
+
+    - name: Check the role refuses a policy on a provisioner
+      vars:
+        step_ca_root_cert: "-----BEGIN CERTIFICATE-----"
+        step_ca_intermediate_cert: "-----BEGIN CERTIFICATE-----"
+        step_ca_intermediate_key: "-----BEGIN ENCRYPTED PRIVATE KEY-----"
+        step_ca_dns_names:
+          - localhost
+        step_ca_provisioners:
+          - type: ACME
+            name: acme
+            policy:
+              x509:
+                allow:
+                  dns:
+                    - "*.k8s.internal"
+      block:
+        - name: Gather the facts the validation needs
+          ansible.builtin.setup:
+            gather_subset:
+              - min
+
+        - name: Run the role validation
+          ansible.builtin.include_role:
+            name: max_pfeiffer.smallstep.step_ca
+            tasks_from: validate.yml
+
+        - name: Fail because the validation passed
+          ansible.builtin.fail:
+            msg: The role accepted a policy on a provisioner.
+      rescue:
+        - name: Assert the validation refused the provisioner policy
+          ansible.builtin.assert:
+            that:
+              - "'ignores a policy on a provisioner' in ansible_failed_result.msg"

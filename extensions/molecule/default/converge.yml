@@ -77,17 +77,18 @@
         step_ca_dns_names:
           - localhost
         step_ca_resolver: 127.0.0.1:53
+        step_ca_db_type: "{{ lookup('ansible.builtin.env', 'MOLECULE_STEP_CA_DB_TYPE', default='badgerv2') }}"
         step_ca_claims:
           defaultTLSCertDuration: 720h
           maxTLSCertDuration: 2160h
+        step_ca_policy:
+          x509:
+            allow:
+              dns:
+                - "*.k8s.internal"
+            allowWildcardNames: true
         step_ca_provisioners:
           - type: ACME
             name: acme
             challenges:
               - dns-01
-            policy:
-              x509:
-                allow:
-                  dns:
-                    - "*.k8s.internal"
-                allowWildcardNames: true
