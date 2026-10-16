@@ -13,10 +13,12 @@ argument_specs:
       step_ca_version:
         type: str
         description: Version of the C(step-ca) package to install, without the Debian revision.
+        # renovate: datasource=github-releases depName=smallstep/certificates
         default: "0.30.2"
       step_ca_step_cli_version:
         type: str
         description: Version of the C(step-cli) package to install, without the Debian revision.
+        # renovate: datasource=github-releases depName=smallstep/cli
         default: "0.31.0"
       step_ca_apt_repository_url:
         type: str

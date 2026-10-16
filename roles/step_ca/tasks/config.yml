@@ -8,11 +8,14 @@
     mode: "0640"
   notify: Restart step-ca
 
+# In check mode on a fresh host, step-cli and the root certificate are not
+# deployed yet, so the fingerprint cannot be read and defaults.json is skipped.
 - name: Read the root CA fingerprint
   ansible.builtin.command:
     cmd: step certificate fingerprint {{ __step_ca_root_cert_path }}
   register: __step_ca_root_fingerprint
   changed_when: false
+  failed_when: __step_ca_root_fingerprint.rc != 0 and not ansible_check_mode
   check_mode: false
 
 - name: Render defaults.json for step-cli
@@ -22,3 +25,4 @@
     owner: root
     group: "{{ step_ca_group }}"
     mode: "0644"
+  when: __step_ca_root_fingerprint.rc == 0
