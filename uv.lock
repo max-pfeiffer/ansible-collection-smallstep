@@ -31,7 +31,7 @@ dev = [
     { name = "ansible-core", specifier = ">=2.21.5" },
     { name = "ansible-lint", specifier = ">=26.10.1" },
     { name = "molecule", specifier = ">=26.10.0" },
-    { name = "molecule-plugins", extras = ["docker"], specifier = ">=26.10.12" },
+    { name = "molecule-plugins", extras = ["docker", "podman"], specifier = ">=26.10.12" },
     { name = "yamllint", specifier = ">=1.38.0" },
 ]
 

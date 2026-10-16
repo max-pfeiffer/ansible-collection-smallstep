@@ -1,4 +1,5 @@
 ---
+# Docker scenario. extensions/molecule/podman runs the same playbooks with Podman.
 dependency:
   name: galaxy
   options:
@@ -7,8 +8,9 @@ driver:
   name: docker
 platforms:
   - name: step-ca
-    image: "geerlingguy/docker-${MOLECULE_DISTRO:-debian13}-ansible:latest"
+    image: "docker.io/geerlingguy/docker-${MOLECULE_DISTRO:-debian13}-ansible:latest"
     command: ""
+    # systemd needs the host cgroup namespace on cgroup v2 hosts
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:rw
     cgroupns_mode: host
