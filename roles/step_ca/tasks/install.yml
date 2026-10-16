@@ -2,6 +2,8 @@
 - name: Install the prerequisites of deb822_repository
   ansible.builtin.apt:
     name: python3-debian
+    update_cache: true
+    cache_valid_time: 3600
 
 - name: Add the Smallstep APT repository
   ansible.builtin.deb822_repository:
