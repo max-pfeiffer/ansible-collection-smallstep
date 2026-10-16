@@ -1,0 +1,18 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Update pinned step-ca and step-cli versions in role defaults and argument specs",
+      "managerFilePatterns": [
+        "/^roles/.+/defaults/main\\.yml$/",
+        "/^roles/.+/meta/argument_specs\\.yml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\n\\s*[a-z_]+: \"?(?<currentValue>[^\"\\n]+)\"?"
+      ],
+      "extractVersionTemplate": "^v?(?<version>.*)$"
+    }
+  ]
+}

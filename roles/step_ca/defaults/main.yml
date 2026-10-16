@@ -1,0 +1,43 @@
+---
+# Package installation
+# renovate: datasource=github-releases depName=smallstep/certificates
+step_ca_version: "0.30.2"
+# renovate: datasource=github-releases depName=smallstep/cli
+step_ca_step_cli_version: "0.31.0"
+step_ca_apt_repository_url: https://packages.smallstep.com/stable/debian
+step_ca_apt_signing_key_url: https://packages.smallstep.com/keys/apt/repo-signing-key.gpg
+step_ca_executable: /usr/bin/step-ca
+
+# Service account and file system layout
+step_ca_user: step
+step_ca_group: step
+step_ca_path: /etc/step-ca
+
+# PKI material, all PEM encoded. The role never creates a root CA.
+# step_ca_root_cert: (required)
+# step_ca_intermediate_cert: (required)
+# step_ca_intermediate_key: (required, keep in Ansible Vault)
+# step_ca_intermediate_key_password: (required, keep in Ansible Vault)
+step_ca_require_encrypted_key: true
+
+# ca.json
+# step_ca_dns_names: (required)
+step_ca_address: ":9000"
+# step_ca_url: (optional, derived from step_ca_dns_names and step_ca_address)
+step_ca_logger_format: text
+step_ca_db_type: badgerv2
+step_ca_provisioners: []
+step_ca_claims: {}
+step_ca_policy: {}
+step_ca_tls: {}
+step_ca_config_extra: {}
+
+# systemd service
+step_ca_resolver: ""
+step_ca_extra_args: []
+step_ca_wait_for_time_sync: true
+step_ca_service_enabled: true
+step_ca_service_state: started
+step_ca_health_check: true
+step_ca_health_check_retries: 10
+step_ca_health_check_delay: 3

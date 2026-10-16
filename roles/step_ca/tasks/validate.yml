@@ -1,0 +1,36 @@
+---
+- name: Assert a supported operating system
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['os_family'] == 'Debian'
+    fail_msg: >-
+      This role supports Debian based distributions only, found {{ ansible_facts['os_family'] }}.
+    quiet: true
+
+- name: Assert PEM encoded certificates
+  ansible.builtin.assert:
+    that:
+      - step_ca_root_cert is search('-----BEGIN CERTIFICATE-----')
+      - step_ca_intermediate_cert is search('-----BEGIN CERTIFICATE-----')
+    fail_msg: step_ca_root_cert and step_ca_intermediate_cert must be PEM encoded certificates.
+    quiet: true
+
+# Accepts PKCS#8 encrypted keys and RFC 1423 encrypted keys, which step-cli
+# creates by default.
+- name: Assert an encrypted intermediate key
+  ansible.builtin.assert:
+    that:
+      - "step_ca_intermediate_key is search('-----BEGIN ENCRYPTED PRIVATE KEY-----|Proc-Type: 4,ENCRYPTED')"
+    fail_msg: >-
+      step_ca_intermediate_key must be an encrypted PEM key. Set step_ca_require_encrypted_key
+      to false to deploy an unencrypted key.
+    quiet: true
+  when: step_ca_require_encrypted_key
+  no_log: true
+
+- name: Assert at least one DNS name
+  ansible.builtin.assert:
+    that:
+      - step_ca_dns_names | length > 0
+    fail_msg: step_ca_dns_names must contain at least one DNS name or IP address.
+    quiet: true

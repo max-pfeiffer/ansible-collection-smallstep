@@ -1,0 +1,65 @@
+---
+- name: Verify
+  hosts: all
+  gather_facts: false
+  vars:
+    ca_url: https://localhost:9000
+    root_cert: /etc/step-ca/certs/root_ca.crt
+  tasks:
+    - name: Gather service facts
+      ansible.builtin.service_facts:
+
+    - name: Assert step-ca is running and enabled
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.services['step-ca.service'].state == 'running'
+          - ansible_facts.services['step-ca.service'].status == 'enabled'
+
+    - name: Query the health endpoint
+      ansible.builtin.uri:
+        url: "{{ ca_url }}/health"
+        ca_path: "{{ root_cert }}"
+      register: health
+
+    - name: Query the ACME directory
+      ansible.builtin.uri:
+        url: "{{ ca_url }}/acme/acme/directory"
+        ca_path: "{{ root_cert }}"
+      register: acme_directory
+
+    - name: Assert the CA is healthy and serves ACME
+      ansible.builtin.assert:
+        that:
+          - health.json.status == 'ok'
+          - "'newOrder' in acme_directory.json"
+
+    - name: Read the step-ca unit properties
+      ansible.builtin.systemd_service:
+        name: step-ca
+      register: service_unit
+
+    - name: Stat the intermediate CA key
+      ansible.builtin.stat:
+        path: /etc/step-ca/secrets/intermediate_ca_key
+      register: intermediate_key
+
+    - name: Assert least privilege
+      ansible.builtin.assert:
+        that:
+          - service_unit.status.User == 'step'
+          - intermediate_key.stat.pw_name == 'root'
+          - intermediate_key.stat.gr_name == 'step'
+          - intermediate_key.stat.mode == '0640'
+
+    - name: Check step-cli defaults.json works
+      ansible.builtin.command:
+        cmd: step ca health
+      environment:
+        STEPPATH: /etc/step-ca
+      register: step_health
+      changed_when: false
+
+    - name: Assert step-cli reports the CA as healthy
+      ansible.builtin.assert:
+        that:
+          - step_health.stdout == 'ok'

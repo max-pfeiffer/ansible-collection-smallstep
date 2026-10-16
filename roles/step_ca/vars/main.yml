@@ -1,0 +1,30 @@
+---
+__step_ca_root_cert_path: "{{ step_ca_path }}/certs/root_ca.crt"
+__step_ca_intermediate_cert_path: "{{ step_ca_path }}/certs/intermediate_ca.crt"
+__step_ca_intermediate_key_path: "{{ step_ca_path }}/secrets/intermediate_ca_key"
+__step_ca_password_file_path: "{{ step_ca_path }}/secrets/password.txt"
+__step_ca_config_path: "{{ step_ca_path }}/config/ca.json"
+__step_ca_db_path: "{{ step_ca_path }}/db"
+__step_ca_port: "{{ step_ca_address.split(':')[-1] }}"
+__step_ca_url: >-
+  {{ step_ca_url | default('https://' ~ step_ca_dns_names[0]
+     ~ ('' if __step_ca_port == '443' else ':' ~ __step_ca_port)) }}
+
+__step_ca_authority: >-
+  {{ {'provisioners': step_ca_provisioners}
+     | combine({'claims': step_ca_claims} if step_ca_claims else {})
+     | combine({'policy': step_ca_policy} if step_ca_policy else {}) }}
+
+__step_ca_config: >-
+  {{ {
+       'root': __step_ca_root_cert_path,
+       'crt': __step_ca_intermediate_cert_path,
+       'key': __step_ca_intermediate_key_path,
+       'address': step_ca_address,
+       'dnsNames': step_ca_dns_names,
+       'logger': {'format': step_ca_logger_format},
+       'db': {'type': step_ca_db_type, 'dataSource': __step_ca_db_path},
+       'authority': __step_ca_authority,
+     }
+     | combine({'tls': step_ca_tls} if step_ca_tls else {})
+     | combine(step_ca_config_extra, recursive=true) }}

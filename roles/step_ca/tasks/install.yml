@@ -1,0 +1,26 @@
+---
+- name: Install the prerequisites of deb822_repository
+  ansible.builtin.apt:
+    name: python3-debian
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Add the Smallstep APT repository
+  ansible.builtin.deb822_repository:
+    name: smallstep
+    types: deb
+    uris: "{{ step_ca_apt_repository_url }}"
+    suites: debs
+    components: main
+    signed_by: "{{ step_ca_apt_signing_key_url }}"
+  register: __step_ca_apt_repository
+
+- name: Install step-ca and step-cli
+  ansible.builtin.apt:
+    name:
+      - "step-ca={{ step_ca_version }}-*"
+      - "step-cli={{ step_ca_step_cli_version }}-*"
+    update_cache: true
+    cache_valid_time: "{{ 0 if __step_ca_apt_repository is changed else 3600 }}"
+    allow_downgrade: true
+  notify: Restart step-ca

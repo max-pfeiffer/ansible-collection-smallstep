@@ -1,0 +1,154 @@
+---
+argument_specs:
+  main:
+    short_description: Install and manage a Smallstep step-ca certificate authority
+    description:
+      - Installs C(step-ca) and C(step-cli) from the official Smallstep APT repository.
+      - Deploys an externally created root certificate and intermediate CA certificate and key.
+        The role never creates or stores a root CA key.
+      - Renders C(ca.json) completely from variables, so the configuration is fully declarative.
+      - Runs C(step-ca) as a hardened systemd service under a dedicated system user.
+    author: Max Pfeiffer
+    options:
+      step_ca_version:
+        type: str
+        description: Version of the C(step-ca) package to install, without the Debian revision.
+        # renovate: datasource=github-releases depName=smallstep/certificates
+        default: "0.30.2"
+      step_ca_step_cli_version:
+        type: str
+        description: Version of the C(step-cli) package to install, without the Debian revision.
+        # renovate: datasource=github-releases depName=smallstep/cli
+        default: "0.31.0"
+      step_ca_apt_repository_url:
+        type: str
+        description: URL of the Smallstep APT repository.
+        default: https://packages.smallstep.com/stable/debian
+      step_ca_apt_signing_key_url:
+        type: str
+        description: URL of the GPG key that signs the Smallstep APT repository.
+        default: https://packages.smallstep.com/keys/apt/repo-signing-key.gpg
+      step_ca_executable:
+        type: path
+        description: Path of the C(step-ca) binary installed by the package.
+        default: /usr/bin/step-ca
+      step_ca_user:
+        type: str
+        description: System user that runs C(step-ca).
+        default: step
+      step_ca_group:
+        type: str
+        description: Group of the system user that runs C(step-ca).
+        default: step
+      step_ca_path:
+        type: path
+        description: Directory for configuration, certificates, secrets and database (C(STEPPATH)).
+        default: /etc/step-ca
+      step_ca_root_cert:
+        type: str
+        required: true
+        description: PEM encoded root CA certificate.
+      step_ca_intermediate_cert:
+        type: str
+        required: true
+        description: PEM encoded intermediate CA certificate, signed by the root CA.
+      step_ca_intermediate_key:
+        type: str
+        required: true
+        no_log: true
+        description: PEM encoded, encrypted private key of the intermediate CA. Keep it in Ansible Vault.
+      step_ca_intermediate_key_password:
+        type: str
+        required: true
+        no_log: true
+        description: Password of the intermediate CA key. Keep it in Ansible Vault.
+      step_ca_require_encrypted_key:
+        type: bool
+        description: Fail if O(step_ca_intermediate_key) is not an encrypted PEM key.
+        default: true
+      step_ca_dns_names:
+        type: list
+        elements: str
+        required: true
+        description:
+          - DNS names and IP addresses of the CA server (C(dnsNames) in C(ca.json)).
+          - The first entry is used to build O(step_ca_url).
+      step_ca_address:
+        type: str
+        description: Address C(step-ca) listens on.
+        default: ":9000"
+      step_ca_url:
+        type: str
+        description:
+          - URL of the CA, written to C(defaults.json) and used for the health check.
+          - Defaults to the first entry of O(step_ca_dns_names) and the port of O(step_ca_address).
+      step_ca_logger_format:
+        type: str
+        description: Log format of C(step-ca).
+        choices: [text, json]
+        default: text
+      step_ca_db_type:
+        type: str
+        description: Database type of C(step-ca). The database is stored in C(<step_ca_path>/db).
+        default: badgerv2
+      step_ca_provisioners:
+        type: list
+        elements: dict
+        description:
+          - Provisioners, written verbatim to C(authority.provisioners) in C(ca.json).
+          - See U(https://smallstep.com/docs/step-ca/provisioners/) for the available fields.
+        default: []
+      step_ca_claims:
+        type: dict
+        description: Authority wide claims, for example certificate durations. Omitted when empty.
+        default: {}
+      step_ca_policy:
+        type: dict
+        description: Authority wide certificate issuance policy. Omitted when empty.
+        default: {}
+      step_ca_tls:
+        type: dict
+        description: TLS settings of the CA server (C(tls) in C(ca.json)). Omitted when empty.
+        default: {}
+      step_ca_config_extra:
+        type: dict
+        description: Additional settings, recursively merged into C(ca.json) last.
+        default: {}
+      step_ca_resolver:
+        type: str
+        description:
+          - DNS resolver (C(host:port)) used by C(step-ca) for ACME validation, passed as C(--resolver).
+          - Leave empty to use the system resolver.
+        default: ""
+      step_ca_extra_args:
+        type: list
+        elements: str
+        description: Additional command line arguments for C(step-ca).
+        default: []
+      step_ca_wait_for_time_sync:
+        type: bool
+        description:
+          - Order the service after C(time-sync.target), so certificates are not issued with a wrong clock.
+          - Only effective if a service like C(systemd-time-wait-sync.service) or C(chrony-wait.service) is enabled.
+        default: true
+      step_ca_service_enabled:
+        type: bool
+        description: Enable the C(step-ca) service at boot.
+        default: true
+      step_ca_service_state:
+        type: str
+        description: State of the C(step-ca) service.
+        choices: [started, stopped]
+        default: started
+      step_ca_health_check:
+        type: bool
+        description: Check the C(/health) endpoint of the CA after the service has been started.
+        default: true
+      step_ca_health_check_retries:
+        type: int
+        description: Number of health check attempts.
+        default: 10
+      step_ca_health_check_delay:
+        type: int
+        description: Seconds between health check attempts.
+        default: 3

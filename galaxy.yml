@@ -1,0 +1,37 @@
+---
+namespace: max_pfeiffer
+name: smallstep
+version: 0.1.0
+readme: README.md
+authors:
+  - Max Pfeiffer <max@maxpfeiffer.ch>
+description: >-
+  Install and manage a Smallstep step-ca certificate authority with an
+  externally created (offline) root CA.
+license_file: LICENSE
+tags:
+  - pki
+  - smallstep
+  - security
+  - acme
+  - linux
+dependencies: {}
+repository: https://github.com/max-pfeiffer/ansible-collection-smallstep
+documentation: https://github.com/max-pfeiffer/ansible-collection-smallstep/blob/main/README.md
+homepage: https://github.com/max-pfeiffer/ansible-collection-smallstep
+issues: https://github.com/max-pfeiffer/ansible-collection-smallstep/issues
+build_ignore:
+  - .github
+  - .venv
+  - .ansible
+  - .gitignore
+  - .pre-commit-config.yaml
+  - .ansible-lint
+  - .yamllint
+  - .idea
+  - build
+  - extensions/molecule
+  - pyproject.toml
+  - uv.lock
+  - renovate.json
+  - "*.tar.gz"

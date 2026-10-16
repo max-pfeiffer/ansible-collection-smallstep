@@ -1,0 +1,30 @@
+---
+- name: Create the step-ca group
+  ansible.builtin.group:
+    name: "{{ step_ca_group }}"
+    system: true
+
+- name: Create the step-ca user
+  ansible.builtin.user:
+    name: "{{ step_ca_user }}"
+    group: "{{ step_ca_group }}"
+    home: "{{ step_ca_path }}"
+    create_home: false
+    shell: /usr/sbin/nologin
+    system: true
+
+- name: Create the step-ca directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ step_ca_group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: "{{ step_ca_path }}", owner: root, mode: "0750" }
+    - { path: "{{ step_ca_path }}/certs", owner: root, mode: "0750" }
+    - { path: "{{ step_ca_path }}/config", owner: root, mode: "0750" }
+    - { path: "{{ step_ca_path }}/secrets", owner: root, mode: "0750" }
+    - { path: "{{ __step_ca_db_path }}", owner: "{{ step_ca_user }}", mode: "0700" }
+  loop_control:
+    label: "{{ item.path }}"
