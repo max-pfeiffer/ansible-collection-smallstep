@@ -32,7 +32,7 @@ jobs:
       - run: uv run ansible-galaxy collection build --output-path build/
 
   molecule:
-    name: molecule (${{ matrix.distro }}, ${{ matrix.runner }})
+    name: molecule (${{ matrix.distro }}, ${{ matrix.backend }}, ${{ matrix.runner }})
     needs: lint
     runs-on: ${{ matrix.runner }}
     strategy:
@@ -40,16 +40,15 @@ jobs:
       matrix:
         runner: [ubuntu-24.04, ubuntu-24.04-arm]
         distro: [debian12, debian13]
+        backend: [docker, podman]
     env:
       MOLECULE_DISTRO: ${{ matrix.distro }}
+      MOLECULE_CONTAINERS_BACKEND: ${{ matrix.backend }}
       PY_COLORS: "1"
       ANSIBLE_FORCE_COLOR: "1"
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7
       - run: uv sync --locked
-      - name: Install the collection under test
-        run: |
-          uv run ansible-galaxy collection build --output-path build/
-          uv run ansible-galaxy collection install build/*.tar.gz --force
+      # Molecule installs the collection under test from the working tree before each run.
       - run: uv run molecule test

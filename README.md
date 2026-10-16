@@ -37,15 +37,11 @@ collections:
 ## Development
 
 The development environment is managed with [uv](https://docs.astral.sh/uv/). Molecule tests
-require Docker.
+run with Podman or Docker, see [CONTRIBUTING.md](CONTRIBUTING.md#testing).
 
 ```shell
 uv sync
 uv run ansible-lint
-
-# Molecule uses the installed collection
-uv run ansible-galaxy collection build --output-path build/ --force
-uv run ansible-galaxy collection install build/*.tar.gz --force
 MOLECULE_DISTRO=debian13 uv run molecule test
 ```
 

@@ -10,6 +10,6 @@ dev = [
     "ansible-core>=2.21.5",
     "ansible-lint>=26.10.1",
     "molecule>=26.10.0",
-    "molecule-plugins[docker]>=26.10.12",
+    "molecule-plugins[docker,podman]>=26.10.12",
     "yamllint>=1.38.0",
 ]

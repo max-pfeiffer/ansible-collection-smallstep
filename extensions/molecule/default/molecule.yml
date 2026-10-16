@@ -3,15 +3,14 @@ dependency:
   name: galaxy
   options:
     requirements-file: ${MOLECULE_SCENARIO_DIRECTORY}/requirements.yml
+# Uses Podman if it is installed, otherwise Docker. Set MOLECULE_CONTAINERS_BACKEND
+# to docker or podman to choose explicitly.
 driver:
-  name: docker
+  name: containers
 platforms:
   - name: step-ca
-    image: "geerlingguy/docker-${MOLECULE_DISTRO:-debian13}-ansible:latest"
+    image: "docker.io/geerlingguy/docker-${MOLECULE_DISTRO:-debian13}-ansible:latest"
     command: ""
-    volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:rw
-    cgroupns_mode: host
     privileged: true
     pre_build_image: true
 provisioner:
