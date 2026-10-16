@@ -1,0 +1,93 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    test_pki_path: /root/test-pki
+    test_pki_password: molecule-test-only
+  pre_tasks:
+    - name: Install step-cli to create a throwaway test PKI
+      ansible.builtin.include_role:
+        name: max_pfeiffer.smallstep.step_ca
+        tasks_from: install.yml
+
+    - name: Create the test PKI directory
+      ansible.builtin.file:
+        path: "{{ test_pki_path }}"
+        state: directory
+        mode: "0700"
+
+    - name: Write the test PKI password file and intermediate template
+      ansible.builtin.copy:
+        dest: "{{ test_pki_path }}/{{ item.name }}"
+        content: "{{ item.content }}"
+        mode: "0600"
+      loop:
+        - name: password.txt
+          content: "{{ test_pki_password }}"
+        - name: intermediate.tpl
+          content: |
+            {
+              "subject": {{ '{{' }} toJson .Subject {{ '}}' }},
+              "keyUsage": ["certSign", "crlSign"],
+              "basicConstraints": {"isCA": true, "maxPathLen": 0},
+              "nameConstraints": {
+                "critical": true,
+                "permittedDNSDomains": ["k8s.internal", "localhost"]
+              }
+            }
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Create the test root CA
+      ansible.builtin.command:
+        cmd: >-
+          step certificate create "Molecule Test Root CA"
+          root_ca.crt root_ca_key --profile root-ca
+          --password-file password.txt
+        chdir: "{{ test_pki_path }}"
+        creates: "{{ test_pki_path }}/root_ca.crt"
+
+    - name: Create the name constrained test intermediate CA
+      ansible.builtin.command:
+        cmd: >-
+          step certificate create "Molecule Test Intermediate CA"
+          intermediate_ca.crt intermediate_ca_key
+          --template intermediate.tpl
+          --ca root_ca.crt --ca-key root_ca_key --ca-password-file password.txt
+          --password-file password.txt
+        chdir: "{{ test_pki_path }}"
+        creates: "{{ test_pki_path }}/intermediate_ca.crt"
+
+    - name: Read the test PKI
+      ansible.builtin.slurp:
+        src: "{{ test_pki_path }}/{{ item }}"
+      loop:
+        - root_ca.crt
+        - intermediate_ca.crt
+        - intermediate_ca_key
+      register: test_pki
+
+  roles:
+    - role: max_pfeiffer.smallstep.step_ca
+      vars:
+        step_ca_root_cert: "{{ test_pki.results[0].content | b64decode }}"
+        step_ca_intermediate_cert: "{{ test_pki.results[1].content | b64decode }}"
+        step_ca_intermediate_key: "{{ test_pki.results[2].content | b64decode }}"
+        step_ca_intermediate_key_password: "{{ test_pki_password }}"
+        step_ca_dns_names:
+          - localhost
+        step_ca_resolver: 127.0.0.1:53
+        step_ca_claims:
+          defaultTLSCertDuration: 720h
+          maxTLSCertDuration: 2160h
+        step_ca_provisioners:
+          - type: ACME
+            name: acme
+            challenges:
+              - dns-01
+            policy:
+              x509:
+                allow:
+                  dns:
+                    - "*.k8s.internal"
+                allowWildcardNames: true

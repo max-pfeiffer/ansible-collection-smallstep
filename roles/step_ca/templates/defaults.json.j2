@@ -1,0 +1,5 @@
+{{ {
+  'ca-url': __step_ca_url,
+  'fingerprint': __step_ca_root_fingerprint.stdout | trim,
+  'root': __step_ca_root_cert_path,
+} | to_nice_json(indent=2) }}

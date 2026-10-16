@@ -1,0 +1,29 @@
+---
+- name: Deploy the root and intermediate CA certificates
+  ansible.builtin.copy:
+    content: "{{ item.content | trim ~ '\n' }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: "{{ step_ca_group }}"
+    mode: "0644"
+  loop:
+    - { content: "{{ step_ca_root_cert }}", dest: "{{ __step_ca_root_cert_path }}" }
+    - { content: "{{ step_ca_intermediate_cert }}", dest: "{{ __step_ca_intermediate_cert_path }}" }
+  loop_control:
+    label: "{{ item.dest }}"
+  notify: Restart step-ca
+
+- name: Deploy the intermediate CA key and its password
+  ansible.builtin.copy:
+    content: "{{ item.content }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: "{{ step_ca_group }}"
+    mode: "0640"
+  loop:
+    - { content: "{{ step_ca_intermediate_key | trim ~ '\n' }}", dest: "{{ __step_ca_intermediate_key_path }}" }
+    - { content: "{{ step_ca_intermediate_key_password }}", dest: "{{ __step_ca_password_file_path }}" }
+  loop_control:
+    label: "{{ item.dest }}"
+  no_log: true
+  notify: Restart step-ca

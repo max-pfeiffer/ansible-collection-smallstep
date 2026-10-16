@@ -1,0 +1,20 @@
+---
+galaxy_info:
+  role_name: step_ca
+  namespace: max_pfeiffer
+  author: Max Pfeiffer
+  description: Install and manage a Smallstep step-ca certificate authority with an offline root CA
+  license: MIT
+  min_ansible_version: "2.18"
+  platforms:
+    - name: Debian
+      versions:
+        - bookworm
+        - trixie
+  galaxy_tags:
+    - pki
+    - smallstep
+    - stepca
+    - acme
+    - certificates
+dependencies: []

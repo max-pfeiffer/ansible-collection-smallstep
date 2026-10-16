@@ -1,0 +1,56 @@
+# {{ ansible_managed }}
+# Based on https://smallstep.com/docs/step-ca/certificate-authority-server-production
+[Unit]
+Description=step-ca service
+Documentation=https://smallstep.com/docs/step-ca
+Documentation=https://smallstep.com/docs/step-ca/certificate-authority-server-production
+After=network-online.target{{ ' time-sync.target' if step_ca_wait_for_time_sync else '' }}
+Wants=network-online.target{{ ' time-sync.target' if step_ca_wait_for_time_sync else '' }}
+StartLimitIntervalSec=30
+StartLimitBurst=3
+ConditionFileNotEmpty={{ __step_ca_config_path }}
+ConditionFileNotEmpty={{ __step_ca_password_file_path }}
+
+[Service]
+Type=simple
+User={{ step_ca_user }}
+Group={{ step_ca_group }}
+Environment=STEPPATH={{ step_ca_path }}
+WorkingDirectory={{ step_ca_path }}
+ExecStart={{ ([step_ca_executable, __step_ca_config_path, '--password-file', __step_ca_password_file_path]
+  + (['--resolver', step_ca_resolver] if step_ca_resolver else [])
+  + step_ca_extra_args) | join(' ') }}
+ExecReload=/bin/kill --signal HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+
+; Process capabilities & privileges
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+SecureBits=keep-caps
+NoNewPrivileges=yes
+
+; Sandboxing
+ProtectSystem=full
+ProtectHome=true
+RestrictNamespaces=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+PrivateTmp=true
+PrivateDevices=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectKernelTunables=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+LockPersonality=true
+RestrictSUIDSGID=true
+RemoveIPC=true
+RestrictRealtime=true
+SystemCallFilter=@system-service
+SystemCallArchitectures=native
+MemoryDenyWriteExecute=true
+ReadWritePaths={{ __step_ca_db_path }}
+
+[Install]
+WantedBy=multi-user.target
