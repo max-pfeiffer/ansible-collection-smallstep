@@ -28,6 +28,19 @@
   when: step_ca_require_encrypted_key
   no_log: true
 
+# step-ca reads issuance policies only on the authority level of ca.json and
+# silently ignores a policy on a provisioner, which would issue certificates
+# the policy was meant to refuse.
+- name: Assert no provisioner has a policy
+  ansible.builtin.assert:
+    that:
+      - step_ca_provisioners | selectattr('policy', 'defined') | list | length == 0
+    fail_msg: >-
+      step-ca ignores a policy on a provisioner in ca.json. Use step_ca_policy for an authority wide policy,
+      found a policy on provisioner(s)
+      {{ step_ca_provisioners | selectattr('policy', 'defined') | map(attribute='name') | join(', ') }}.
+    quiet: true
+
 - name: Assert at least one DNS name
   ansible.builtin.assert:
     that:

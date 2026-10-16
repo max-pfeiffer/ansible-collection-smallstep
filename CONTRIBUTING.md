@@ -22,6 +22,12 @@ MOLECULE_DISTRO=debian12 uv run molecule test
 MOLECULE_DISTRO=debian13 uv run molecule test  # default distribution
 ```
 
+`MOLECULE_STEP_CA_DB_TYPE` selects the database type, `badgerv2` (default) or `bbolt`:
+
+```shell
+MOLECULE_STEP_CA_DB_TYPE=bbolt uv run molecule test
+```
+
 ### Container engine
 
 There is one scenario per container engine. Both run the same `converge.yml` and `verify.yml`,

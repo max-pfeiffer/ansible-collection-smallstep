@@ -34,7 +34,7 @@ its own configuration, which conflicts with managing `ca.json` declaratively.
 | `/etc/step-ca/secrets/password.txt` | root:step | 0640 | Intermediate CA key password |
 | `/etc/step-ca/config/ca.json` | root:step | 0640 | step-ca configuration |
 | `/etc/step-ca/config/defaults.json` | root:step | 0644 | step-cli defaults, so `STEPPATH=/etc/step-ca step ca health` works |
-| `/etc/step-ca/db` | step:step | 0700 | Database, the only path writable by `step-ca` |
+| `/etc/step-ca/db` | step:step | 0700 | Database (`bbolt.db` with `bbolt`), the only path writable by `step-ca` |
 
 ## Creating the PKI offline
 
@@ -77,9 +77,10 @@ documents them in full. The most important ones:
 | `step_ca_intermediate_key_password` | required | Intermediate CA key password, keep it in Ansible Vault |
 | `step_ca_dns_names` | required | DNS names / IPs of the CA, the first one is used for `step_ca_url` |
 | `step_ca_address` | `:9000` | Listen address |
+| `step_ca_db_type` | `badgerv2` | `badgerv2` or `bbolt`, which needs less memory, for example on a Raspberry Pi |
 | `step_ca_provisioners` | `[]` | Provisioners, written verbatim to `authority.provisioners` |
 | `step_ca_claims` | `{}` | Authority wide claims, for example certificate durations |
-| `step_ca_policy` | `{}` | Authority wide issuance policy |
+| `step_ca_policy` | `{}` | Authority wide issuance policy, see [Issuance policy](#issuance-policy) |
 | `step_ca_tls` | `{}` | TLS settings of the CA server |
 | `step_ca_config_extra` | `{}` | Anything else, recursively merged into `ca.json` |
 | `step_ca_resolver` | `""` | DNS resolver for ACME validation (`--resolver`) |
@@ -109,23 +110,38 @@ at the DNS server that cert-manager updates via RFC 2136, here a Technitium DNS 
         step_ca_claims:
           defaultTLSCertDuration: 720h
           maxTLSCertDuration: 2160h
+        step_ca_policy:
+          x509:
+            allow:
+              dns:
+                - "*.k8s.internal"
+            allowWildcardNames: true
         step_ca_provisioners:
           - type: ACME
             name: acme
             challenges:
               - dns-01
-            policy:
-              x509:
-                allow:
-                  dns:
-                    - "*.k8s.internal"
-                allowWildcardNames: true
 ```
 
 The ACME directory is then available at `https://ca.lan:9000/acme/acme/directory`.
 
-Note that `allowWildcardNames` defaults to `false` in step-ca policies, so it must be enabled
-explicitly to issue wildcard certificates.
+## Issuance policy
+
+`step_ca_policy` restricts the names `step-ca` issues certificates for. Two properties of step-ca
+policies are easy to miss:
+
+- **Authority level only.** A self-hosted `step-ca` reads policies only on the authority level of
+  `ca.json` and silently ignores a `policy` on a provisioner, so the role refuses one.
+- **A wildcard matches exactly one label.** `*.k8s.internal` allows `app.k8s.internal`, but neither
+  `app.team.k8s.internal` nor `k8s.internal` itself. List every level you issue certificates for,
+  for example `*.team.k8s.internal`.
+
+`allowWildcardNames` defaults to `false`, so it must be enabled explicitly to issue wildcard
+certificates like `*.k8s.internal`.
+
+To allow all names below a domain at any depth, rely on the name constraints of the intermediate CA
+instead (see [Creating the PKI offline](#creating-the-pki-offline)). Clients enforce them, and
+`step_ca_policy` can stay empty.
 
 ## Time synchronization
 

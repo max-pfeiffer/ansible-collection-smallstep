@@ -5,6 +5,10 @@ __step_ca_intermediate_key_path: "{{ step_ca_path }}/secrets/intermediate_ca_key
 __step_ca_password_file_path: "{{ step_ca_path }}/secrets/password.txt"
 __step_ca_config_path: "{{ step_ca_path }}/config/ca.json"
 __step_ca_db_path: "{{ step_ca_path }}/db"
+# badger keeps its database in a directory, bbolt in a single file. Both live in
+# the database directory, the only path step-ca may write to.
+__step_ca_db_data_source: >-
+  {{ __step_ca_db_path ~ ('/bbolt.db' if step_ca_db_type == 'bbolt' else '') }}
 __step_ca_port: "{{ step_ca_address.split(':')[-1] }}"
 __step_ca_url: >-
   {{ step_ca_url | default('https://' ~ step_ca_dns_names[0]
@@ -23,7 +27,7 @@ __step_ca_config: >-
        'address': step_ca_address,
        'dnsNames': step_ca_dns_names,
        'logger': {'format': step_ca_logger_format},
-       'db': {'type': step_ca_db_type, 'dataSource': __step_ca_db_path},
+       'db': {'type': step_ca_db_type, 'dataSource': __step_ca_db_data_source},
        'authority': __step_ca_authority,
      }
      | combine({'tls': step_ca_tls} if step_ca_tls else {})

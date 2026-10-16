@@ -89,7 +89,11 @@ argument_specs:
         default: text
       step_ca_db_type:
         type: str
-        description: Database type of C(step-ca). The database is stored in C(<step_ca_path>/db).
+        description:
+          - Database type of C(step-ca). The database is stored in C(<step_ca_path>/db).
+          - C(bbolt) stores it in the file C(<step_ca_path>/db/bbolt.db) and needs less memory than C(badgerv2),
+            for example on a Raspberry Pi.
+        choices: [badgerv2, bbolt]
         default: badgerv2
       step_ca_provisioners:
         type: list
@@ -97,6 +101,8 @@ argument_specs:
         description:
           - Provisioners, written verbatim to C(authority.provisioners) in C(ca.json).
           - See U(https://smallstep.com/docs/step-ca/provisioners/) for the available fields.
+          - A provisioner must not have a C(policy). A self-hosted C(step-ca) ignores policies on provisioners in
+            C(ca.json), use O(step_ca_policy) instead.
         default: []
       step_ca_claims:
         type: dict
